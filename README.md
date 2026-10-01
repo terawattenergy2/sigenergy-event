@@ -163,3 +163,5 @@ Noto Sans Thai ใช้ตาม SIL Open Font License — ดู `public/fonts
 # TE-Reward
 # TE-Reward
 # TE-Reward
+
+QR บนภาพ voucher ใช้รูป LINE OA ที่บริษัทให้มา (`public/assets/line-oa-qr.png`) สำหรับเพิ่มเพื่อน ไม่ใช่ลิงก์ voucher เฉพาะคน ผู้ร่วมงานต้องเก็บลิงก์หน้า voucher ไว้ตรวจผล

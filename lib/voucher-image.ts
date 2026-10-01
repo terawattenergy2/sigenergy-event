@@ -1,9 +1,7 @@
 import sharp, { type OverlayOptions } from "sharp";
-import QRCode from "qrcode";
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { prizeFor, resultStatus, type Entry } from "./prizes";
-import { issueEntryToken } from "./security";
 process.env.FONTCONFIG_FILE ??= join(process.cwd(), "public/fonts/fonts.conf");
 const W = 1536,
   H = 1024;
@@ -44,12 +42,8 @@ export async function renderVoucher(
     : status === "not_selected"
       ? "ขอบคุณที่ร่วมกิจกรรม"
       : "สิทธิ์ร่วมลุ้นรางวัล";
-  const qr = await QRCode.toBuffer("TEV1:" + issueEntryToken(entry.id), {
-    width: 300,
-    margin: 3,
-    errorCorrectionLevel: "M",
-    color: { dark: "#0a2850", light: "#ffffff" },
-  });
+  const qr = await sharp(join(process.cwd(), "public/assets/line-oa-qr.png"))
+    .resize(300, 300, { kernel: "nearest" }).png().toBuffer();
   const bg = await readFile(
     join(process.cwd(), "public/assets/voucher-background.jpg"),
   );
@@ -109,13 +103,13 @@ export async function renderVoucher(
     );
   }
   overlays.push({ input: qr, left: 65, top: 666 });
-  await add("เก็บภาพนี้ไว้เป็นหลักฐาน", 25, "#ffffff", 402, 691, 490);
+  await add("สแกนเพื่อแอด LINE บริษัท", 25, "#ffffff", 402, 691, 490);
   await add(
     prize
       ? "ติดต่อผู้จัดงานเพื่อยืนยันการใช้ส่วนลด"
       : status === "not_selected"
         ? "ติดตามกิจกรรมครั้งต่อไปผ่าน LINE OA"
-        : "เก็บลิงก์เว็บไว้ตรวจผล แล้วส่งรูปผลทาง LINE",
+        : "ตรวจผลบนเว็บ แล้วส่งรูปผลในแชต LINE",
     23,
     "#c8e3ff",
     402,
@@ -123,7 +117,7 @@ export async function renderVoucher(
     490,
   );
   await add(
-    "QR สำหรับตรวจสิทธิ์ ส่งหลักฐานให้บริษัทเท่านั้น",
+    "QR นี้สำหรับเพิ่มเพื่อน LINE OA ของบริษัท",
     19,
     "#8aafd2",
     402,
