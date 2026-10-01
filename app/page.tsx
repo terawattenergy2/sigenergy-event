@@ -191,7 +191,7 @@ export default function Registration() {
               />
               <label htmlFor="consent">
                 ยินยอมให้ {process.env.NEXT_PUBLIC_COMPANY_NAME ?? "TE"}{" "}
-                เก็บชื่อ บริษัท ตำแหน่ง และบัญชี LINE ที่ผูกสิทธิ์
+                เก็บชื่อ บริษัท และตำแหน่ง
                 เพื่อจัดกิจกรรม จับรางวัล และแจ้งผลรางวัล
               </label>
             </div>
@@ -219,7 +219,7 @@ export default function Registration() {
             <ScanLine size={24} />
             <div>
               <strong>รับรูป voucher แล้วแอด LINE OA</strong>
-              <p>ส่งรูปในแชตเพื่อยืนยันสิทธิ์และรับผลรางวัล</p>
+              <p>ตรวจผลบนเว็บ แล้วส่งรูปผลรางวัลให้บริษัทในแชต</p>
             </div>
           </div>
           <p className="secure-note">

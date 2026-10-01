@@ -19,7 +19,29 @@ const state=(await tx.query('SELECT *,reveal_until>now() AS busy FROM event_stat
 const awarded=Number((await tx.query('SELECT count(*) AS count FROM draws WHERE prize_id=$1',[prizeId])).rows[0].count);if(awarded>=prize.quantity)throw new AppError(409,'รางวัลประเภทนี้แจกครบแล้ว');
 const candidates=(await tx.query<Participant>('SELECT p.* FROM participants p WHERE NOT EXISTS(SELECT 1 FROM draws d WHERE d.participant_id=p.id) ORDER BY p.created_at,p.id')).rows;if(!candidates.length)throw new AppError(409,'ไม่มีผู้ร่วมงานที่ยังไม่ได้รับรางวัล');
 const winner=candidates[randomInt(candidates.length)];const drawId=randomUUID();await tx.query('INSERT INTO draws(id,request_key,participant_id,prize_id,operator) VALUES($1,$2,$3,$4,$5)',[drawId,key,winner.id,prizeId,operator]);await tx.query("UPDATE event_state SET reveal_until=now()+interval '8 seconds',updated_at=now() WHERE id=1");
-if(winner.line_user_id)await tx.query("INSERT INTO line_outbox(id,participant_id,kind,available_at) VALUES($1,$2,'winner',now()+interval '8 seconds') ON CONFLICT DO NOTHING",[randomUUID(),winner.id]);return {winner:{id:drawId,participant_id:winner.id,prize_id:prizeId,name:winner.name,company:winner.company,position:winner.position,code:winner.code},replayed:false};})}
+return {winner:{id:drawId,participant_id:winner.id,prize_id:prizeId,name:winner.name,company:winner.company,position:winner.position,code:winner.code},replayed:false};})}
 export async function finalize(db:Database,confirm:boolean){if(!confirm)throw new AppError(400,'กรุณายืนยันการจบการจับรางวัล');return db.transaction(async tx=>{await tx.query('SELECT pg_advisory_xact_lock($1)',[LOCK_ID]);const state=(await tx.query('SELECT *,reveal_until>now() AS busy FROM event_state WHERE id=1 FOR UPDATE')).rows[0];if(!state.registrations_closed)throw new AppError(409,'กรุณาปิดรับลงทะเบียนก่อน');if(state.busy)throw new AppError(409,'กรุณารอวงล้อแสดงผลให้จบ');if(state.finalized)return;
-await tx.query('UPDATE event_state SET finalized=true,updated_at=now() WHERE id=1');const losers=(await tx.query<{id:string}>('SELECT p.id FROM participants p WHERE p.line_user_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM draws d WHERE d.participant_id=p.id)')).rows;for(const p of losers)await tx.query("INSERT INTO line_outbox(id,participant_id,kind) VALUES($1,$2,'not_selected') ON CONFLICT DO NOTHING",[randomUUID(),p.id]);})}
+await tx.query('UPDATE event_state SET finalized=true,updated_at=now() WHERE id=1');})}
 export async function linkLine(db:Database,token:string,lineUser:string){return db.transaction(async tx=>{await tx.query('SELECT pg_advisory_xact_lock($1)',[LOCK_ID]);const entry=await getEntry(tx,token);if(entry.line_user_id&&entry.line_user_id!==lineUser)throw new AppError(409,'voucher นี้ผูกกับบัญชี LINE อื่นแล้ว กรุณาติดต่อผู้จัดงาน');const other=await tx.query('SELECT id FROM participants WHERE line_user_id=$1 AND id<>$2',[lineUser,entry.id]);if(other.rows.length)throw new AppError(409,'บัญชี LINE นี้ผูกกับผู้ร่วมงานคนอื่นแล้ว กรุณาติดต่อผู้จัดงาน');await tx.query('UPDATE participants SET line_user_id=$1,line_linked_at=COALESCE(line_linked_at,now()) WHERE id=$2',[lineUser,entry.id]);return {...entry,line_user_id:lineUser}})}
+
+export async function resetEvent(db:Database,mode:'reset-draws'|'reset-all',confirmation:unknown,operator:string){
+ const expected=mode==='reset-all'?'DELETE ALL':'RESET DRAW';
+ if(confirmation!==expected)throw new AppError(400,'กรุณาพิมพ์คำยืนยันให้ถูกต้อง');
+ return db.transaction(async tx=>{
+  await tx.query('SELECT pg_advisory_xact_lock($1)',[LOCK_ID]);
+  const authorized=await tx.query('SELECT id FROM admin_session WHERE id=1 AND token_hash=$1 AND expires_at>now()',[operator]);
+  if(!authorized.rows.length)throw new AppError(401,'บัญชีผู้จัดงานหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+  const state=(await tx.query('SELECT reveal_until>now() AS busy FROM event_state WHERE id=1 FOR UPDATE')).rows[0];
+  if(state.busy)throw new AppError(409,'กรุณารอวงล้อแสดงผลให้จบก่อนล้างข้อมูล');
+  await tx.query('DELETE FROM line_outbox');
+  await tx.query('DELETE FROM draws');
+  if(mode==='reset-all'){
+   await tx.query('DELETE FROM participants');
+   await tx.query('DELETE FROM webhook_events');
+   await tx.query('DELETE FROM rate_limits');
+   await tx.query('UPDATE event_state SET registrations_closed=false,finalized=false,reveal_until=NULL,updated_at=now() WHERE id=1');
+  }else{
+   await tx.query('UPDATE event_state SET finalized=false,reveal_until=NULL,updated_at=now() WHERE id=1');
+  }
+ });
+}

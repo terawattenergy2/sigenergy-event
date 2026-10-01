@@ -25,6 +25,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { LINE_OA_URL } from "@/lib/contact";
 import Wheel from "@/components/wheel";
 import { PRIZES, type PrizeId } from "@/lib/prizes";
 import {
@@ -81,10 +82,10 @@ export default function Admin() {
   const [codes, setCodes] = useState<string[]>([]);
   const [winner, setWinner] = useState<Winner | null>(null);
   const [stage, setStage] = useState(false);
-  const [confirm, setConfirm] = useState<"close" | "finalize" | null>(null);
+  const [confirm, setConfirm] = useState<"close" | "finalize" | "reset-draws" | "reset-all" | null>(null);
   const [now, setNow] = useState(Date.now());
   const [recover, setRecover] = useState(false);
-  const [sendingLine, setSendingLine] = useState(false);
+  const [resetText, setResetText] = useState("");
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
   async function request(path: string, body?: unknown) {
@@ -157,15 +158,22 @@ export default function Admin() {
     setBusy(true);
     setError("");
     try {
-      await request("event", { action: confirm, confirm: true });
+      await request("event", { action: confirm, confirm: true, confirmation: resetText });
+      if (confirm.startsWith("reset")) {
+        sessionStorage.removeItem("te_pending_draw");
+        setRecover(false); setWinner(null); setRotation(0);
+        setCodes(confirm === "reset-all" ? [] : data!.participants.map(p => p.code));
+        setResetText("");
+      }
       setConfirm(null);
       await refresh();
       setMessage(
         confirm === "close"
           ? "ปิดรับลงทะเบียนแล้ว เริ่มจับรางวัลได้"
+          : confirm === "reset-draws" ? "ล้างผลรางวัลแล้ว พร้อมสุ่มใหม่ด้วยรายชื่อเดิม"
+          : confirm === "reset-all" ? "ล้างข้อมูลทั้งหมดแล้ว เปิดรับลงทะเบียนใหม่"
           : "จบการจับรางวัลแล้ว บันทึกผลของทุกคนเรียบร้อย",
       );
-      if (confirm === "finalize") await sendLine();
     } catch (e) {
       setError(e instanceof Error ? e.message : "บันทึกไม่ได้");
     } finally {
@@ -213,7 +221,6 @@ export default function Admin() {
           await refresh(true, true);
         }, 7200),
       );
-      timers.current.push(setTimeout(() => sendLine(), 8300));
     } catch (e) {
       setError(
         e instanceof Error
@@ -221,36 +228,6 @@ export default function Admin() {
           : "สุ่มไม่ได้ กรุณากดลองอีกครั้งเพื่อกู้ผลรอบเดิม",
       );
       setBusy(false);
-    }
-  }
-  async function sendLine() {
-    if (sendingLine) return;
-    setSendingLine(true);
-    let sent = 0,
-      failed = 0;
-    try {
-      for (let batch = 0; batch < 50; batch++) {
-        const d = await request("line-retry", {});
-        if (!d.configured) {
-          setMessage("กรุณาตั้งค่า LINE OA ก่อนส่งผล");
-          break;
-        }
-        sent += d.sent;
-        failed += d.failed;
-        setMessage(
-          `ส่งผลทาง LINE สำเร็จ ${sent} รายการ${failed ? " · ยังมีรายการที่ต้องลองใหม่" : ""}`,
-        );
-        if (d.failed || !d.sent || !d.remaining) break;
-      }
-      await refresh(true, true);
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "ส่ง LINE ไม่สำเร็จ ผลรางวัลถูกบันทึกไว้แล้ว",
-      );
-    } finally {
-      setSendingLine(false);
     }
   }
   async function fullscreen() {
@@ -392,9 +369,9 @@ export default function Admin() {
         </div>
         <div>
           <MessageCircle />
-          <span>ผูก LINE แล้ว</span>
+          <span>สิทธิ์ที่ยังไม่ถูกรางวัล</span>
           <strong>
-            {data.participants.filter((p) => p.lineLinked).length}
+            {data.participants.filter((p) => !p.prize_id).length}
           </strong>
         </div>
       </div>
@@ -560,25 +537,13 @@ export default function Admin() {
         </div>
         <div className="line-admin">
           <MessageCircle size={22} />
-          <div>
-            <strong>
-              {data.lineReady
-                ? "LINE OA พร้อมใช้งาน"
-                : "ยังไม่ได้ตั้งค่า LINE OA"}
-            </strong>
-            <p>
-              {data.lineReady
-                ? `ผลรอส่ง ${data.pendingMessages} รายการ · กดส่งหลังจบแต่ละรอบ`
-                : "ตั้งค่า URL, channel secret และ access token ใน Vercel ก่อนใช้หน้างาน"}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => sendLine()}
-            disabled={busy || spinning || sendingLine || !data.lineReady}
-          >
-            {sendingLine ? "กำลังส่งผล…" : "ส่งผลที่ค้าง / ลองใหม่"}
-          </Button>
+          <div><strong>ส่งหลักฐานผลรางวัลทาง LINE ด้วยตนเอง</strong>
+          <p>ผู้ร่วมงานตรวจผลและดาวน์โหลดรูปจากเว็บ แล้วส่งให้บริษัทในแชต</p></div>
+          <a className="secondary-link" href={LINE_OA_URL} target="_blank" rel="noopener noreferrer">เปิด LINE บริษัท</a>
+        </div>
+        <div className="management-actions">
+          <Button variant="outline" disabled={busy || spinning || serverBusy} onClick={() => {setResetText(""); setConfirm("reset-draws");}}>ล้างผลรางวัล / สุ่มใหม่</Button>
+          <Button variant="destructive" disabled={busy || spinning || serverBusy} onClick={() => {setResetText(""); setConfirm("reset-all");}}>ล้างข้อมูลทั้งหมด</Button>
         </div>
         <div className="list-heading">
           <h2>รายชื่อและผลรางวัล</h2>
@@ -595,7 +560,6 @@ export default function Admin() {
                 <TableHead>รหัส</TableHead>
                 <TableHead>ชื่อผู้ร่วมงาน</TableHead>
                 <TableHead>บริษัท / ตำแหน่ง</TableHead>
-                <TableHead>LINE</TableHead>
                 <TableHead>ผลรางวัล</TableHead>
               </TableRow>
             </TableHeader>
@@ -609,9 +573,6 @@ export default function Admin() {
                   <TableCell>
                     {p.company}
                     <small className="row-meta">{p.position}</small>
-                  </TableCell>
-                  <TableCell>
-                    {p.lineLinked ? "ผูกแล้ว" : "ยังไม่ผูก"}
                   </TableCell>
                   <TableCell>
                     {p.prize_id ? (
@@ -642,14 +603,19 @@ export default function Admin() {
             <DialogTitle>
               {confirm === "close"
                 ? "ปิดรับลงทะเบียน?"
+                : confirm === "reset-draws" ? "ล้างผลรางวัลเพื่อสุ่มใหม่?"
+                : confirm === "reset-all" ? "ล้างผู้ลงทะเบียนและผลรางวัลทั้งหมด?"
                 : "ยืนยันจบการจับรางวัล?"}
             </DialogTitle>
             <DialogDescription>
               {confirm === "close"
                 ? "ผู้ร่วมงานใหม่จะลงทะเบียนไม่ได้ และระบบจะใช้รายชื่อที่บันทึกแล้วสำหรับจับรางวัล"
+                : confirm === "reset-draws" ? "ลบผลรางวัลเดิมทั้งหมด เก็บผู้ลงทะเบียนและรหัส voucher ไว้ แล้วเริ่มสุ่มได้ใหม่ ผลเดิมและภาพผลที่ส่งไปแล้วจะใช้ยืนยันไม่ได้ ควรดาวน์โหลด CSV ก่อนล้างผล"
+                : confirm === "reset-all" ? "ลบผู้ลงทะเบียนและผลรางวัลทั้งหมด เปิดรับลงทะเบียนใหม่ และเริ่มรหัส TE-001 อีกครั้ง ลิงก์ voucher เดิมจะใช้ไม่ได้ การลบนี้ย้อนกลับไม่ได้ ควรดาวน์โหลด CSV ก่อน"
                 : "หลังยืนยันจะสุ่มเพิ่มไม่ได้ ผู้ที่ยังไม่ได้รับรางวัลจะมีผลเป็น “ไม่ได้รับรางวัล” แม้รางวัลบางประเภทจะยังแจกไม่ครบ"}
             </DialogDescription>
           </DialogHeader>
+          {confirm?.startsWith("reset") && <div><label htmlFor="reset-confirm">พิมพ์ {confirm === "reset-all" ? "DELETE ALL" : "RESET DRAW"} เพื่อยืนยัน</label><Input id="reset-confirm" value={resetText} onChange={e => setResetText(e.target.value)} autoComplete="off" /></div>}
           <DialogFooter>
             <Button
               variant="outline"
@@ -658,7 +624,7 @@ export default function Admin() {
             >
               กลับ
             </Button>
-            <Button onClick={eventAction} disabled={busy}>
+            <Button onClick={eventAction} disabled={busy || (!!confirm?.startsWith("reset") && resetText !== (confirm === "reset-all" ? "DELETE ALL" : "RESET DRAW"))}>
               {busy ? "กำลังบันทึก…" : "ยืนยัน"}
             </Button>
           </DialogFooter>

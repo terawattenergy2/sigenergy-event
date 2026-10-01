@@ -4,10 +4,10 @@ import {
   Check,
   Download,
   MessageCircle,
-  Copy,
   RefreshCw,
   LoaderCircle,
 } from "lucide-react";
+import { LINE_OA_URL } from "@/lib/contact";
 import { Button } from "@/components/ui/button";
 type Entry = {
   code: string;
@@ -22,7 +22,6 @@ export default function VoucherView({ token }: { token: string }) {
   const [entry, setEntry] = useState<Entry | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   async function load() {
     setBusy(true);
@@ -42,7 +41,7 @@ export default function VoucherView({ token }: { token: string }) {
     load();
   }, [token]);
   const base = "/api/voucher/" + encodeURIComponent(token) + "/image";
-  const line = process.env.NEXT_PUBLIC_LINE_OA_URL;
+  const line = LINE_OA_URL;
   const validLine = !!line && /^https:\/\/(lin\.ee|line\.me)\//.test(line);
   async function download(kind: "entry" | "result") {
     setError("");
@@ -76,7 +75,7 @@ export default function VoucherView({ token }: { token: string }) {
           </span>
           <div>
             <h1>ลงทะเบียนเรียบร้อย</h1>
-            <p>เก็บรูป voucher นี้ไว้ แล้วส่งให้ LINE OA ของบริษัท</p>
+            <p>เก็บรูป voucher และลิงก์หน้านี้ไว้เพื่อตรวจผลรางวัล</p>
           </div>
         </div>
         {busy && !entry && (
@@ -136,34 +135,17 @@ export default function VoucherView({ token }: { token: string }) {
               <span className="number-badge">1</span>
               <div>
                 <strong>แอด LINE OA ของบริษัท</strong>
-                <p>เปิดแชตและส่งรูป voucher ที่บันทึกจากเว็บ</p>
+                <p>เพิ่มเพื่อนไว้เพื่อติดต่อผู้จัดงาน</p>
               </div>
               <span className="number-badge">2</span>
               <div>
-                <strong>รับรูปผลรางวัลในแชต</strong>
+                <strong>ตรวจผลและส่งรูปให้บริษัท</strong>
                 <p>
-                  ก่อนจับรางวัล ระบบจะตอบว่า “รอประกาศผล” หลังประกาศผล พิมพ์
-                  “ผลรางวัล” เพื่อตรวจอีกครั้ง
+                  หลังจับรางวัล กด “ตรวจผล” แล้วดาวน์โหลดรูปผลรางวัล
+                  ส่งรูปให้บริษัทในแชต LINE เพื่อยืนยันสิทธิ์
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="copy-proof"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText("รับผล TEV1:" + token);
-                  setCopied(true);
-                } catch {
-                  setError("คัดลอกไม่ได้ กรุณาส่งรูป voucher แทน");
-                }
-              }}
-            >
-              <Copy size={17} />
-              {copied
-                ? "คัดลอกแล้ว · นำไปวางในแชต LINE"
-                : "ส่งรูปไม่ได้? คัดลอกข้อความยืนยันสิทธิ์"}
-            </Button>
             <div className="status-panel">
               <div>
                 <span className="eyebrow">สถานะสิทธิ์ {entry.code}</span>
@@ -175,9 +157,7 @@ export default function VoucherView({ token }: { token: string }) {
                       : "รอการจับรางวัลจากผู้จัดงาน"}
                 </h3>
                 <p>
-                  {entry.lineLinked
-                    ? "ผูกบัญชี LINE เรียบร้อยแล้ว"
-                    : "ยังไม่ได้ผูก LINE · ส่งรูป voucher เข้าแชตเพื่อผูกสิทธิ์"}
+                  ตรวจผลบนเว็บ แล้วส่งรูปผลรางวัลให้ผู้จัดงานทาง LINE ด้วยตนเอง
                 </p>
               </div>
               <Button variant="outline" onClick={load} disabled={busy}>
