@@ -195,3 +195,4 @@ yarn build
 พื้นหลังสร้างด้วย built-in ImageGen ตาม brief: ภาพแนวนอนโทน midnight blue / cyan ระบบ inverter และ energy storage สีขาวอยู่ทางขวา เว้นพื้นที่ทางซ้ายสำหรับข้อความ voucher ไม่มีโลโก้หรือข้อความในภาพต้นฉบับ บันทึกเป็น `public/assets/voucher-background.jpg`
 Noto Sans Thai ใช้ตาม SIL Open Font License — ดู `public/fonts/OFL.txt`
 # TE-Reward
+# TE-Reward
