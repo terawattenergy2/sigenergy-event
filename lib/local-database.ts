@@ -1,0 +1,4 @@
+import {PGlite,type Transaction} from '@electric-sql/pglite';import {resolve} from 'node:path';import type {Database,Queryable} from './database';import type {QueryResultRow} from 'pg';
+const globalLocal=globalThis as typeof globalThis&{teLocalDatabase?:PGlite};
+function adapter(client:PGlite|Transaction):Queryable{return {async query<T extends QueryResultRow=QueryResultRow>(text:string,values?:unknown[]){const result=await client.query<T>(text,values);return {rows:result.rows,rowCount:result.affectedRows??null}}}}
+export function localDatabase():Database{if(process.env.NODE_ENV==='production')throw new Error('Local demo database is forbidden in production');globalLocal.teLocalDatabase??=new PGlite(resolve(process.env.LOCAL_DATABASE_PATH??'work/local-db'));const pg=globalLocal.teLocalDatabase;return {...adapter(pg),transaction:fn=>pg.transaction(tx=>fn(adapter(tx)))}}

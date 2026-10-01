@@ -1,0 +1,2 @@
+import {cookies} from 'next/headers';import {getDatabase} from '@/lib/database';import {ADMIN_COOKIE} from '@/lib/auth';import {digest,validateOrigin} from '@/lib/security';import {failure,json} from '@/lib/http';
+export async function POST(req:Request){try{validateOrigin(req);const jar=await cookies();const token=jar.get(ADMIN_COOKIE)?.value;if(token)await getDatabase().query('DELETE FROM admin_session WHERE id=1 AND token_hash=$1',[digest(token)]);jar.delete(ADMIN_COOKIE);return json({ok:true})}catch(e){return failure(e)}}

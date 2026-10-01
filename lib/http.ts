@@ -1,0 +1,4 @@
+import {AppError} from './security';
+export function failure(error:unknown){if(error instanceof AppError)return Response.json({error:error.message},{status:error.status,headers:{'Cache-Control':'no-store'}});console.error('Request failed',error instanceof Error?error.message:'Unknown error');return Response.json({error:'ระบบยังไม่พร้อม กรุณาลองอีกครั้ง หรือติดต่อผู้จัดงาน'},{status:503,headers:{'Cache-Control':'no-store'}})}
+export function json(data:unknown,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store'}})}
+export async function readJson(req:Request){const text=await req.text();if(text.length>10000)throw new AppError(413,'ข้อมูลใหญ่เกินไป');try{const d=JSON.parse(text);if(!d||typeof d!=='object'||Array.isArray(d))throw new Error();return d as Record<string,unknown>}catch{throw new AppError(400,'ข้อมูลไม่ถูกต้อง')}}

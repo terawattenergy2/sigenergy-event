@@ -1,0 +1,5 @@
+import {readFile,readdir} from 'node:fs/promises';
+import {Pool} from 'pg';
+if(!process.env.DATABASE_URL){try{process.loadEnvFile('.env.local')}catch{}}
+if(!process.env.DATABASE_URL)throw new Error('Set DATABASE_URL in .env.local or environment first');
+const pool=new Pool({connectionString:process.env.DATABASE_URL,max:1});const c=await pool.connect();try{await c.query('BEGIN');await c.query('SELECT pg_advisory_xact_lock(734211)');await c.query('CREATE TABLE IF NOT EXISTS app_migrations(name text PRIMARY KEY,applied_at timestamptz NOT NULL DEFAULT now())');for(const f of (await readdir('db')).filter(f=>f.endsWith('.sql')).sort()){if(!(await c.query('SELECT name FROM app_migrations WHERE name=$1',[f])).rowCount){await c.query(await readFile(`db/${f}`,'utf8'));await c.query('INSERT INTO app_migrations(name) VALUES($1)',[f]);console.log(`Applied ${f}`)}}await c.query('COMMIT');console.log('Database is ready');}catch(e){await c.query('ROLLBACK');throw e}finally{c.release();await pool.end()}
