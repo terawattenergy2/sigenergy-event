@@ -7,6 +7,7 @@ import {
   RefreshCw,
   LoaderCircle,
 } from "lucide-react";
+import { prizeLabel } from "@/lib/prizes";
 import { LINE_OA_URL } from "@/lib/contact";
 import { Button } from "@/components/ui/button";
 type Entry = {
@@ -151,7 +152,7 @@ export default function VoucherView({ token }: { token: string }) {
                 <span className="eyebrow">สถานะสิทธิ์ {entry.code}</span>
                 <h3>
                   {entry.status === "winner"
-                    ? `ได้รับส่วนลด ${entry.prize?.label} ${entry.prize?.discount}%`
+                    ? `ได้รับรางวัล ${entry.prize ? prizeLabel(entry.prize) : ""}`
                     : entry.status === "not_selected"
                       ? "รอบนี้ไม่ได้รับรางวัล"
                       : "รอการจับรางวัลจากผู้จัดงาน"}

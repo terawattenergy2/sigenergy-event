@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PRIZES } from "@/lib/prizes";
+import { PRIZES, TOTAL_WINNERS, prizeLabel, prizeValue } from "@/lib/prizes";
 export default function Registration() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -103,19 +103,19 @@ export default function Registration() {
             {PRIZES.map((p) => (
               <div className="prize-card" key={p.id}>
                 <div className="prize-percent">
-                  {p.discount}
-                  <span>%</span>
+                  {p.discount || "★"}
+                  {p.discount > 0 && <span>%</span>}
                 </div>
                 <div>
                   <strong>{p.label}</strong>
-                  <p>ส่วนลดสูงสุด {p.cap.toLocaleString("th-TH")} บาท</p>
+                  <p>{prizeValue(p)}</p>
                 </div>
                 <span className="prize-count">{p.quantity} รางวัล</span>
               </div>
             ))}
           </div>
           <p className="campaign-note">
-            3 ประเภทรางวัล · ผู้ชนะ 13 คน · รับผู้ร่วมงานสูงสุด 150 คน
+            {PRIZES.length} ประเภทรางวัล · ผู้ชนะ {TOTAL_WINNERS} คน · รับผู้ร่วมงานสูงสุด 150 คน
           </p>
         </section>
         <section className="form-card">

@@ -1,7 +1,7 @@
 import sharp, { type OverlayOptions } from "sharp";
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
-import { prizeFor, resultStatus, type Entry } from "./prizes";
+import { prizeFor, prizeLabel, prizeValue, resultStatus, type Entry } from "./prizes";
 process.env.FONTCONFIG_FILE ??= join(process.cwd(), "public/fonts/fonts.conf");
 const W = 1536,
   H = 1024;
@@ -75,7 +75,7 @@ export async function renderVoucher(
   await add(short(entry.position, 44), 23, "#c8e3ff", 65, 465, 780);
   if (prize) {
     await add(
-      `${prize.label}  ส่วนลด ${prize.discount}%`,
+      prizeLabel(prize),
       37,
       "#ffffff",
       65,
@@ -83,7 +83,7 @@ export async function renderVoucher(
       850,
     );
     await add(
-      `สูงสุดไม่เกิน ${prize.cap.toLocaleString("en-US")} บาท`,
+      prizeValue(prize),
       26,
       "#8ddcff",
       65,
@@ -106,7 +106,7 @@ export async function renderVoucher(
   await add("สแกนเพื่อแอด LINE บริษัท", 25, "#ffffff", 402, 691, 490);
   await add(
     prize
-      ? "ติดต่อผู้จัดงานเพื่อยืนยันการใช้ส่วนลด"
+      ? "ติดต่อผู้จัดงานเพื่อยืนยันรับรางวัล"
       : status === "not_selected"
         ? "ติดตามกิจกรรมครั้งต่อไปผ่าน LINE OA"
         : "ตรวจผลบนเว็บ แล้วส่งรูปผลในแชต LINE",
@@ -125,7 +125,7 @@ export async function renderVoucher(
     460,
   );
   await add(
-    "ส่วนลดใช้ตามเงื่อนไขที่ผู้จัดงานกำหนด",
+    "รับรางวัลตามเงื่อนไขที่ผู้จัดงานกำหนด",
     18,
     "#a2bfd9",
     402,

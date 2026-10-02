@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { LINE_OA_URL } from "@/lib/contact";
 import Wheel from "@/components/wheel";
-import { PRIZES, type PrizeId } from "@/lib/prizes";
+import { PRIZES, TOTAL_WINNERS, prizeLabel, prizeValue, type PrizeId } from "@/lib/prizes";
 import {
   Maximize,
   Minimize,
@@ -364,7 +364,7 @@ export default function Admin() {
           <span>ผู้ได้รับรางวัล</span>
           <strong>
             {data.participants.filter((p) => p.prize_id).length}
-            <small> / 13</small>
+            <small> / {TOTAL_WINNERS}</small>
           </strong>
         </div>
         <div>
@@ -393,10 +393,10 @@ export default function Admin() {
           <div>
             <span className="eyebrow">LUCKY DRAW</span>
             <h2>
-              {prize.label} <span>{prize.discount}%</span>
+              {prizeLabel(prize)}
             </h2>
             <p>
-              ส่วนลดสูงสุด {prize.cap.toLocaleString("th-TH")} บาท · เหลือ{" "}
+              {prizeValue(prize)} · เหลือ{" "}
               {remaining} รางวัล
             </p>
           </div>
@@ -439,7 +439,7 @@ export default function Admin() {
               <SelectContent>
                 {data.prizes.map((p) => (
                   <SelectItem value={p.id} key={p.id}>
-                    {p.label} {p.discount}% · {p.quantity - p.awarded}/
+                    {prizeLabel(p)} · {p.quantity - p.awarded}/
                     {p.quantity}
                   </SelectItem>
                 ))}
@@ -484,8 +484,7 @@ export default function Admin() {
                 <p>{winner.company}</p>
                 <small>{winner.position}</small>
                 <div>
-                  {PRIZES.find((p) => p.id === winner.prize_id)?.label} · ส่วนลด{" "}
-                  {PRIZES.find((p) => p.id === winner.prize_id)?.discount}%
+                  {prizeLabel(PRIZES.find(p => p.id === winner.prize_id)!)}
                 </div>
               </div>
             ) : (
@@ -502,7 +501,7 @@ export default function Admin() {
           </div>
         </div>
         <div className="stage-footer">
-          <span>3 ประเภทรางวัล · 13 ผู้ชนะ</span>
+          <span>{PRIZES.length} ประเภทรางวัล · {TOTAL_WINNERS} ผู้ชนะ</span>
           <span>TE × SIGENERGY</span>
         </div>
       </div>
@@ -577,8 +576,7 @@ export default function Admin() {
                   <TableCell>
                     {p.prize_id ? (
                       <span className="result-win">
-                        {PRIZES.find((x) => x.id === p.prize_id)?.label}{" "}
-                        {PRIZES.find((x) => x.id === p.prize_id)?.discount}%
+                        {prizeLabel(PRIZES.find(x => x.id === p.prize_id)!)}
                       </span>
                     ) : data.state.finalized ? (
                       "ไม่ได้รับรางวัล"
