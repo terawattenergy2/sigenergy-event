@@ -86,6 +86,8 @@ export default function Admin() {
   const [now, setNow] = useState(Date.now());
   const [recover, setRecover] = useState(false);
   const [resetText, setResetText] = useState("");
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [resultFilter, setResultFilter] = useState("all");
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
   async function request(path: string, body?: unknown) {
@@ -301,6 +303,12 @@ export default function Admin() {
         </section>
       </main>
     );
+  const search = participantSearch.trim().normalize("NFC").toLocaleLowerCase("th");
+  const filteredParticipants = data.participants.filter(p => {
+    const matchesSearch = [p.code, p.name, p.company, p.position].some(value => value.normalize("NFC").toLocaleLowerCase("th").includes(search));
+    const matchesPrize = resultFilter === "all" || (resultFilter === "winners" ? !!p.prize_id : resultFilter === "unawarded" ? !p.prize_id : p.prize_id === resultFilter);
+    return matchesSearch && matchesPrize;
+  });
   return (
     <main className="admin-site">
       <header className="admin-header">
@@ -548,6 +556,26 @@ export default function Admin() {
           <h2>รายชื่อและผลรางวัล</h2>
           <span>{data.participants.length} ผู้ร่วมงาน</span>
         </div>
+        <div className="participant-filters">
+          <div className="participant-search">
+            <label htmlFor="participant-search">ค้นหารายชื่อ</label>
+            <Input id="participant-search" type="search" placeholder="ชื่อ บริษัท ตำแหน่ง หรือรหัส TE-001" value={participantSearch} onChange={e => setParticipantSearch(e.target.value)} />
+          </div>
+          <div className="participant-result-filter">
+            <label htmlFor="participant-result-filter">กรองผลรางวัล</label>
+            <Select value={resultFilter} onValueChange={setResultFilter}>
+              <SelectTrigger id="participant-result-filter"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">ผลรางวัลทั้งหมด</SelectItem>
+                <SelectItem value="winners">ผู้ได้รับรางวัลทั้งหมด</SelectItem>
+                <SelectItem value="unawarded">{data.state.finalized ? "ไม่ได้รับรางวัล" : "ยังไม่ได้รับรางวัล"}</SelectItem>
+                {PRIZES.map(p => <SelectItem key={p.id} value={p.id}>{prizeLabel(p)}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button variant="outline" onClick={() => {setParticipantSearch(""); setResultFilter("all");}} disabled={!participantSearch && resultFilter === "all"}>ล้างตัวกรอง</Button>
+        </div>
+        <p className="participant-filter-count" role="status">แสดง {filteredParticipants.length} จาก {data.participants.length} คน</p>
         {!data.participants.length ? (
           <p className="empty-state">
             ยังไม่มีผู้ลงทะเบียน รายชื่อจะปรากฏเมื่อส่งฟอร์มสำเร็จ
@@ -564,7 +592,8 @@ export default function Admin() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.participants.map((p) => (
+              {!filteredParticipants.length && <TableRow><TableCell colSpan={5} className="participant-no-results">ไม่พบรายชื่อที่ตรงกับการค้นหาหรือตัวกรอง</TableCell></TableRow>}
+              {filteredParticipants.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>
                     <strong className="entry-code">{p.code}</strong>
