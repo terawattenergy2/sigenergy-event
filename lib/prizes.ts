@@ -1,7 +1,7 @@
 export const PRIZES=[
  {id:'sigenstor',label:'SigenStor',discount:5,cap:20000,quantity:1,color:'#1c6bea'},
  {id:'neo',label:'SigenStor NEO',discount:3,cap:10000,quantity:2,color:'#24b8dc'},
- {id:'bundle',label:'Sigenergy + JA Solar',discount:2,cap:5000,quantity:10,color:'#8fa9ff'},
+ {id:'bundle',label:'Sigenergy + JA Solar',discount:3,cap:5000,quantity:10,color:'#8fa9ff'},
  {id:'hat',label:'หมวก TE',discount:0,cap:3000,quantity:10,color:'#39a8da'},
  {id:'shirt',label:'เสื้อ TE',discount:0,cap:2500,quantity:5,color:'#526ed3'},
  {id:'micro',label:'Sigen Micro',discount:0,cap:12400,quantity:2,color:'#13aab1'}

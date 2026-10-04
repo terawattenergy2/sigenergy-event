@@ -24,8 +24,6 @@ export async function renderWinnerVoucher(entry:Entry){
  const width=2048,height=1138,headerWidth=970;
  const source=await sharp(join(process.cwd(),`public/assets/prize-templates/${prize.id}.png`)).resize(width,height).png().toBuffer();
  const overlays:OverlayOptions[]=[];
- // The supplied bundle artwork says 3%; the saved prize is 2%. Correct only the numeral.
- if(prize.id==='bundle')overlays.push({input:Buffer.from(`<svg width="930" height="550"><defs><linearGradient id="b" x2="1" y2="1"><stop stop-color="#0768b7"/><stop offset="1" stop-color="#03244f"/></linearGradient></defs><rect width="930" height="550" rx="38" fill="url(#b)" stroke="#78baff" stroke-width="3"/><text x="65" y="470" font-family="Arial" font-weight="900" font-style="italic" font-size="550" fill="white">2%</text></svg>`),left:1015,top:270});
  const greeting=`แสดงความยินดีกับ คุณ${entry.name} จากบริษัท ${entry.company}`;
  overlays.push({input:await text(greeting,36,headerWidth,true),left:1020,top:45});
  overlays.push({input:Buffer.from('<svg width="840" height="238"><rect width="840" height="238" rx="25" fill="#052d60" fill-opacity=".88"/></svg>'),left:0,top:900});
