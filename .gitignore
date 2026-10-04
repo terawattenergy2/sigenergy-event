@@ -9,3 +9,5 @@ work/
 coverage/
 .next-dev/
 next-env.d.ts
+
+.next-draw-demo/

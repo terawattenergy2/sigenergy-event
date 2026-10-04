@@ -15,7 +15,7 @@ test('entry and result vouchers embed the exact supplied LINE QR asset',async()=
   const sharp=(await import('sharp')).default;
   const expected=await sharp('public/assets/line-oa-qr.png').resize(300,300,{kernel:'nearest'}).removeAlpha().raw().toBuffer();
   const r=await register(db,input(1));const entry=await getEntry(db,r.token);
-  for(const kind of ['entry','result'] as const){const png=await renderVoucher({...entry,prize_id:'sigenstor'},kind);const actual=await sharp(png).extract({left:65,top:666,width:300,height:300}).removeAlpha().raw().toBuffer();assert.deepEqual(actual,expected);}
+  for(const kind of ['entry','result'] as const){const png=await renderVoucher({...entry,prize_id:'hat'},kind);const actual=await sharp(png).extract({left:65,top:666,width:300,height:300}).removeAlpha().raw().toBuffer();assert.deepEqual(actual,expected);}
  }finally{await pg.close()}
 });
 
@@ -39,3 +39,5 @@ test('reset draw keeps vouchers and permits a new draw; clear all invalidates ol
   assert.equal(Number((await db.query('SELECT count(*) AS count FROM draws')).rows[0].count),0);
  }finally{await pg.close()}
 });
+
+test('discount winner vouchers use the supplied templates and personalize the downloaded PNG',async()=>{const {pg,db}=await fixture();try{const sharp=(await import('sharp')).default;const r=await register(db,input(1));const e=await getEntry(db,r.token);for(const prize_id of ['sigenstor','neo','bundle']){const a=await renderVoucher({...e,prize_id},'result');const b=await renderVoucher({...e,prize_id,name:'ผู้ชนะอีกคน',company:'บริษัทอีกแห่ง'},'result');const meta=await sharp(a).metadata();assert.equal(meta.width,2048);assert.equal(meta.height,1138);assert.notDeepEqual(a,b);}}finally{await pg.close()}});

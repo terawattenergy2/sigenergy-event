@@ -1,3 +1,4 @@
+import { renderWinnerVoucher } from "./winner-voucher";
 import sharp, { type OverlayOptions } from "sharp";
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
@@ -35,6 +36,7 @@ export async function renderVoucher(
   entry: Entry,
   kind: "entry" | "result" = "entry",
 ) {
+  if (kind === "result" && entry.prize_id) { const custom = await renderWinnerVoucher(entry); if (custom) return custom; }
   const prize = kind === "result" ? prizeFor(entry.prize_id) : undefined;
   const status = kind === "entry" ? "pending" : resultStatus(entry);
   const title = prize

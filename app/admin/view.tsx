@@ -560,6 +560,7 @@ export default function Admin() {
                 <TableHead>ชื่อผู้ร่วมงาน</TableHead>
                 <TableHead>บริษัท / ตำแหน่ง</TableHead>
                 <TableHead>ผลรางวัล</TableHead>
+                <TableHead>Voucher</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -584,6 +585,7 @@ export default function Admin() {
                       "รอจับรางวัล"
                     )}
                   </TableCell>
+                  <TableCell>{p.prize_id ? <a className="secondary-link" href={`/api/admin/voucher/${p.id}`}><Download size={16} /> ดาวน์โหลด voucher</a> : "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

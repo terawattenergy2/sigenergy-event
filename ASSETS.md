@@ -10,3 +10,5 @@ Final prompt:
 Font: Noto Sans Thai from https://github.com/google/fonts/tree/main/ofl/notosansthai — SIL Open Font License, saved in `public/fonts/OFL.txt`.
 
 Voucher text, numbers, personal data and QR codes are rendered separately by the application. The background contains no personal information.
+
+Voucher text uses Kanit Regular/Bold as a visual approximation of the supplied Canva Sans reference. Source: https://github.com/google/fonts/tree/main/ofl/kanit. License: public/fonts/Kanit-OFL.txt (SIL Open Font License). Fonts are bundled for server rendering on Vercel.
