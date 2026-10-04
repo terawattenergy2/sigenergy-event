@@ -24,8 +24,17 @@ export async function renderWinnerVoucher(entry:Entry){
  const width=2048,height=1138,headerWidth=970;
  const source=await sharp(join(process.cwd(),`public/assets/prize-templates/${prize.id}.png`)).resize(width,height).png().toBuffer();
  const overlays:OverlayOptions[]=[];
- const greeting=`แสดงความยินดีกับ คุณ${entry.name} จากบริษัท ${entry.company}`;
- overlays.push({input:await text(greeting,36,headerWidth,true),left:1020,top:45});
+ const nameLine=`แสดงความยินดีกับ คุณ ${entry.name}`;
+ const companyLine=`จากบริษัท ${entry.company}`;
+ const greeting=`${nameLine} ${companyLine}`;
+ const headlineFont=fontkit.openSync(join(process.cwd(),'public/fonts/Kanit-Bold.ttf'));
+ const greetingWidth=headlineFont.layout(greeting).positions.reduce((sum:number,p:{xAdvance:number})=>sum+p.xAdvance,0)*36/headlineFont.unitsPerEm;
+ const lines=greetingWidth>headerWidth ? [nameLine,companyLine] : [greeting];
+ for(let i=0;i<lines.length;i++){
+  const image=await text(lines[i],36,headerWidth,true);
+  const metadata=await sharp(image).metadata();
+  overlays.push({input:image,left:1020+headerWidth-metadata.width!,top:45+i*48});
+ }
  overlays.push({input:Buffer.from('<svg width="840" height="238"><rect width="840" height="238" rx="25" fill="#052d60" fill-opacity=".88"/></svg>'),left:0,top:900});
  overlays.push({input:await text('เงื่อนไขการใช้ Voucher',27,780,true),left:50,top:924});
  const terms=[
